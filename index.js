@@ -14,10 +14,12 @@ async function initMap() {
   const { Map, MapTypeId } = await google.maps.importLibrary("maps");
   const core = await google.maps.importLibrary("core");
   const draw = await google.maps.importLibrary("drawing");
-  // const places = await google.maps.importLibrary("places");
+  const places = await google.maps.importLibrary("places");
 
-  // const autocomplete = new places.Autoco
-  // console.log(places);
+  const drawControlEl = createDrawingControls(draw, drawingManager);
+  const addressControlEl = createAddressSearch();
+
+  const autocomplete = new places.Autocomplete(addressControlEl.children[0]);
 
   map = createMap(Map, MapTypeId);
   marker = new google.maps.Marker({
@@ -31,11 +33,9 @@ async function initMap() {
     "polygoncomplete",
     handlePolygonComplete
   );
-  const drawControlEl = createDrawingControls(draw, drawingManager);
+
   map.controls[google.maps.ControlPosition.TOP_RIGHT].push(drawControlEl);
-  map.controls[google.maps.ControlPosition.TOP_LEFT].push(
-    createAddressSearch()
-  );
+  map.controls[google.maps.ControlPosition.TOP_LEFT].push(addressControlEl);
 }
 
 function createDrawingControls(draw, drawingManager) {
@@ -88,6 +88,9 @@ function createDrawingManager(map, draw, color) {
 function createAddressSearch() {
   const searchContainer = document.createElement("div");
   const addressInput = document.createElement("input");
+  addressInput.name = "address";
+  addressInput.id = "address";
+  addressInput.placeholder = "Enter Address";
   // places.AutoComplete(addressInput);
   const searchBtn = document.createElement("button");
   searchBtn.textContent = "Search";
