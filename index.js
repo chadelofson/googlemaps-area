@@ -16,16 +16,18 @@ async function initMap() {
   const draw = await google.maps.importLibrary("drawing");
   const places = await google.maps.importLibrary("places");
 
-  const drawControlEl = createDrawingControls(draw, drawingManager);
-  const addressControlEl = createAddressSearch();
-
-  const autocomplete = new places.Autocomplete(addressControlEl.children[0]);
-
+  // Google Specific objects
   map = createMap(Map, MapTypeId);
   marker = new google.maps.Marker({
     map,
   });
   drawingManager = createDrawingManager(map, draw, "fff");
+
+  const drawControlEl = createDrawingControls(draw, drawingManager);
+  const addressControlEl = createAddressSearch();
+
+  const autocomplete = new places.Autocomplete(addressControlEl.children[0]);
+
   drawingManager.setMap(map);
 
   google.maps.event.addListener(
