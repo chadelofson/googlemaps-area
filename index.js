@@ -183,7 +183,7 @@ function markAddress(point) {
 }
 
 function postParentMessage(msg) {
-  console.log("Posting Parent Message");
+  console.log("Posting Parent Message: ", msg);
   window.parent.postMessage(msg);
 }
 
