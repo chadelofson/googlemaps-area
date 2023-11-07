@@ -105,7 +105,7 @@ function calculateTotalArea() {
   for (const polygon of polygons) {
     totalArea += getAreaOfPolygon(getPolygonArray(polygon));
   }
-  return convertArea(totalArea, "ft2");
+  return convertArea(totalArea, "ft2").toFixed(1);
 }
 
 function getPolygonArray(polygon) {
