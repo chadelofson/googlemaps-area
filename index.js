@@ -29,27 +29,7 @@ async function initMap() {
   google.maps.event.addListener(
     drawingManager,
     "polygoncomplete",
-    (polygon) => {
-      polygons.push(polygon);
-      console.log(calculateTotalArea());
-      drawingManager.setDrawingMode(null);
-      drawingManager.setOptions({
-        polygonOptions: {
-          draggable: true,
-          editable: true,
-        },
-      });
-      google.maps.event.addListener(
-        polygon.getPath(),
-        "set_at",
-        handlePolygonEvent
-      );
-      google.maps.event.addListener(
-        polygon.getPath(),
-        "insert_at",
-        handlePolygonEvent
-      );
-    }
+    handlePolygonComplete
   );
   const drawControlEl = createDrawingControls(draw, drawingManager);
   map.controls[google.maps.ControlPosition.TOP_RIGHT].push(drawControlEl);
