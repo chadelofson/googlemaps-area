@@ -73,7 +73,7 @@ function createDrawingButton() {
   const drawBtn = document.createElement("button");
   drawBtn.textContent = "Draw";
   drawContainer.appendChild(drawBtn);
-  return drawBtn;
+  return drawContainer;
 }
 
 function createMap(Map, MapTypeId) {
