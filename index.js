@@ -5,26 +5,32 @@
 const { getAreaOfPolygon, convertArea } = window.geolib;
 
 let map;
+let marker;
 let drawingManager;
-let isSub = false;
 const WHITE = "fff";
-const RED = "ff0000";
-const addPolygons = [];
-const subPolygons = [];
+const polygons = [];
 
 async function initMap() {
   const { Map, MapTypeId } = await google.maps.importLibrary("maps");
   const core = await google.maps.importLibrary("core");
   const draw = await google.maps.importLibrary("drawing");
+  // const places = await google.maps.importLibrary("places");
+
+  // const autocomplete = new places.Autoco
+  // console.log(places);
 
   map = createMap(Map, MapTypeId);
+  marker = new google.maps.Marker({
+    map,
+  });
   drawingManager = createDrawingManager(map, draw, "fff");
+  drawingManager.setMap(map);
 
   google.maps.event.addListener(
     drawingManager,
     "polygoncomplete",
     (polygon) => {
-      isSub ? appendSubPolygon(polygon) : appendAddPolygon(polygon);
+      polygons.push(polygon);
       console.log(calculateTotalArea());
       drawingManager.setDrawingMode(null);
       drawingManager.setOptions({
@@ -33,58 +39,38 @@ async function initMap() {
           editable: true,
         },
       });
+      google.maps.event.addListener(
+        polygon.getPath(),
+        "set_at",
+        handlePolygonEvent
+      );
+      google.maps.event.addListener(
+        polygon.getPath(),
+        "insert_at",
+        handlePolygonEvent
+      );
     }
   );
-
   const drawControlEl = createDrawingControls(draw, drawingManager);
   map.controls[google.maps.ControlPosition.TOP_CENTER].push(drawControlEl);
-
-  // console.log("Drawing Manager Instance: ", drawingMsdanager);
+  map.controls[google.maps.ControlPosition.TOP_LEFT].push(
+    createAddressSearch()
+  );
 }
 
 function createDrawingControls(draw, drawingManager) {
   const drawControlEl = document.createElement("div");
-  const drawAddBtn = createAddDrawingButton(draw);
-  drawAddBtn.addEventListener("click", () => {
-    const color = "white";
-    isSub = false;
+  const drawBtn = createDrawingButton();
+  drawBtn.addEventListener("click", () => {
     drawingManager.setDrawingMode(draw.OverlayType.POLYGON);
-    drawingManager.setOptions({
-      polygonOptions: {
-        strokeColor: color,
-      },
-    });
   });
-  const drawSubBtn = createSubDrawingButton(draw);
-  drawSubBtn.addEventListener("click", (e) => {
-    const color = "red";
-    isSub = true;
-    drawingManager.setDrawingMode(draw.OverlayType.POLYGON);
-    drawingManager.setOptions({
-      polygonOptions: {
-        strokeColor: color,
-      },
-    });
-  });
-  drawControlEl.appendChild(drawAddBtn);
-  drawControlEl.appendChild(drawSubBtn);
+  drawControlEl.appendChild(drawBtn);
   return drawControlEl;
 }
 
-function createAddDrawingButton(draw, drawManager) {
+function createDrawingButton() {
   const drawBtn = document.createElement("button");
-  drawBtn.textContent = "Include";
-  drawBtn.addEventListener("click", (e) => {});
-
-  return drawBtn;
-}
-
-function createSubDrawingButton(draw) {
-  isSub = true;
-  const color = "ff0000";
-  const drawBtn = document.createElement("button");
-  drawBtn.textContent = "Exclude";
-
+  drawBtn.textContent = "Draw";
   return drawBtn;
 }
 
@@ -106,7 +92,7 @@ function createDrawingManager(map, draw, color) {
     drawingControl: false,
     polygonOptions: {
       strokeColor: color,
-      fillColor: "color",
+      fillColor: color,
       fillOpacity: 0.05,
       strokeOpacity: 0.9,
       editable: true,
@@ -117,21 +103,25 @@ function createDrawingManager(map, draw, color) {
   });
 }
 
-function appendAddPolygon(polygon) {
-  addPolygons.push(polygon);
-}
-
-function appendSubPolygon(polygon) {
-  subPolygons.push(polygon);
+function createAddressSearch() {
+  const searchContainer = document.createElement("div");
+  const addressInput = document.createElement("input");
+  // places.AutoComplete(addressInput);
+  const searchBtn = document.createElement("button");
+  searchBtn.textContent = "Search";
+  searchBtn.addEventListener("click", () => {
+    const address = addressInput.value;
+    showAddressLocation(address);
+  });
+  searchContainer.appendChild(addressInput);
+  searchContainer.appendChild(searchBtn);
+  return searchContainer;
 }
 
 function calculateTotalArea() {
   let totalArea = 0;
-  for (const area of addPolygons) {
-    totalArea += getAreaOfPolygon(getPolygonArray(area));
-  }
-  for (const area of subPolygons) {
-    totalArea -= getAreaOfPolygon(getPolygonArray(area));
+  for (const polygon of polygons) {
+    totalArea += getAreaOfPolygon(getPolygonArray(polygon));
   }
   return convertArea(totalArea, "ft2");
 }
@@ -141,6 +131,78 @@ function getPolygonArray(polygon) {
     .getPath()
     .getArray()
     .map((p) => [p.lat(), p.lng()]);
+}
+
+function handlePolygonComplete(polygon) {
+  console.log("Polygon Completed");
+  polygons.push(polygon);
+  handlePolygonEvent();
+  drawingManager.setDrawingMode(null);
+  drawingManager.setOptions({
+    polygonOptions: {
+      draggable: true,
+      editable: true,
+    },
+  });
+  google.maps.event.addListener(
+    polygon.getPath(),
+    "set_at",
+    handlePolygonEvent
+  );
+  google.maps.event.addListener(
+    polygon.getPath(),
+    "insert_at",
+    handlePolygonEvent
+  );
+}
+
+function handlePolygonEvent() {
+  console.log("Handling Polygon Event");
+  postParentMessage(calculateTotalArea());
+}
+
+async function findLocation(address) {
+  const { Geocoder } = await google.maps.importLibrary("geocoding");
+  const geocoder = new Geocoder();
+  try {
+    const { results } = await geocoder.geocode({ address });
+    map.setCenter(results[0].geometry.location);
+    map.setZoom(20);
+    marker.setPosition(results[0].geometry.location);
+    marker.setMap(map);
+    // responseDiv.style.display = "block";
+    // response.innerText = JSON.stringify(result, null, 2);
+    return results;
+  } catch (error) {
+    alert(`The address search was not successful: ${error}`);
+  }
+}
+
+function showAddressLocation(address) {
+  findLocation(address, (res, status) => {
+    if (!res || status != google.maps.GeocoderStatus.OK) {
+      // add an error message
+    } else {
+      const firstLocation = res[0];
+      const point = firstLocation.geometry.location;
+      markAddress(point);
+    }
+  });
+}
+
+function markAddress(point) {
+  new google.maps.Marker({
+    position: point,
+    map,
+    title: "Address Results",
+  });
+  map.setCenter(point);
+  map.setZoom(12);
+}
+
+function postParentMessage(msg) {
+  console.log("Posting Parent Message");
+  window.parent.postMessage(msg);
 }
 
 // window.initMap = initMap;
