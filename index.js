@@ -52,7 +52,7 @@ async function initMap() {
     }
   );
   const drawControlEl = createDrawingControls(draw, drawingManager);
-  map.controls[google.maps.ControlPosition.TOP_CENTER].push(drawControlEl);
+  map.controls[google.maps.ControlPosition.TOP_RIGHT].push(drawControlEl);
   map.controls[google.maps.ControlPosition.TOP_LEFT].push(
     createAddressSearch()
   );
@@ -69,8 +69,10 @@ function createDrawingControls(draw, drawingManager) {
 }
 
 function createDrawingButton() {
+  const drawContainer = document.createElement("div");
   const drawBtn = document.createElement("button");
   drawBtn.textContent = "Draw";
+  drawContainer.appendChild(drawBtn);
   return drawBtn;
 }
 
