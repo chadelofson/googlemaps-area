@@ -52,6 +52,7 @@ function createDrawingControls(draw, drawingManager) {
 
 function createDrawingButton() {
   const drawContainer = document.createElement("div");
+  drawContainer.classList.add('control')
   const drawBtn = document.createElement("button");
   drawBtn.textContent = "Draw";
   drawContainer.appendChild(drawBtn);
@@ -89,6 +90,7 @@ function createDrawingManager(map, draw, color) {
 
 function createAddressSearch() {
   const searchContainer = document.createElement("div");
+  searchContainer.classList.add('control')
   const addressInput = document.createElement("input");
   addressInput.name = "address";
   addressInput.id = "address";
