@@ -191,7 +191,7 @@ function markAddress(point) {
 
 function postParentMessage(msg) {
   console.log("Posting Parent Message: ", msg);
-  window.parent.postMessage(msg);
+  window.parent.postMessage(msg, 'https://chad582.wixsite.com/wix-dev');
 }
 
 // window.initMap = initMap;
